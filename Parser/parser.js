@@ -55,9 +55,38 @@ class Parser{
     }
 
     AdditiveExpression(){
-        let left = this.PrimaryExpression();
+        let left = this.ModuloExpression();
         while(this._lookahead && this._lookahead.type === "ADDITIVE_OPERATOR"){
             const operator = this._eat("ADDITIVE_OPERATOR").value ;
+            const right = this.ModuloExpression();
+            left = {
+                type: "BinaryExpression",
+                operator,
+                left,
+                right
+            }
+        }
+        return left ;
+    }
+    ModuloExpression(){
+        let left = this.MultiplicativeExpression();
+        while(this._lookahead && this._lookahead.type === "MODULO_OPERATOR"){
+            const operator = this._eat("MODULO_OPERATOR").value ;
+            const right = this.MultiplicativeExpression();
+            left = {
+                type: "BinaryExpression",
+                operator,
+                left,
+                right
+            }
+        }
+        return left ;
+    }
+
+    MultiplicativeExpression(){
+        let left = this.PrimaryExpression();
+        while(this._lookahead && this._lookahead.type === "MULTIPLICATIVE_OPERATOR"){
+            const operator = this._eat("MULTIPLICATIVE_OPERATOR").value ;
             const right = this.PrimaryExpression();
             left = {
                 type: "BinaryExpression",
@@ -73,6 +102,18 @@ class Parser{
         if(this._isLateral(this._lookahead.type)){
             return this.Literal();
         }
+
+        switch(this._lookahead.type){
+            case "(":
+                return this.ParenthesizedExpression();
+        }
+    }
+
+    ParenthesizedExpression(){
+        this._eat("(");
+        const expression = this.Expression();
+        this._eat(")");
+        return expression ;
     }
 
     _isLateral(tokenType){
